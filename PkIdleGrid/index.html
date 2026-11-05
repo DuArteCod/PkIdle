@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>PkIdleGrid</title>
+  <link rel="stylesheet" href="src/styles/output.css">
+  
+  <!-- Scripts de Domínio e Lógica -->
+  <script src="src/domain/iv-math.js"></script>
+  <script src="src/domain/hunts-data.js"></script>
+  <script src="src/domain/game-catalog.js"></script>
+  <script src="src/game/collector.js"></script>
+  
+  <!-- Módulos de Interface -->
+  <script src="src/ui/grid-manager.js"></script>
+  <script src="src/ui/accounts-modal.js"></script>
+  <script src="src/ui/pokedex-travel.js"></script>
+  <script src="src/ui/iv-card.js"></script>
+  <script src="src/ui/sidebar-panel.js"></script>
+  <script src="src/ui/app.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 flex flex-col h-screen overflow-hidden select-none">
+
+  <!-- BARRA SUPERIOR (HEADER) -->
+  <header class="h-12 bg-slate-900 border-b border-slate-800 px-3 flex items-center justify-between shrink-0 z-30">
+    
+    <!-- Logo & Controles de Layout -->
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
+        <img src="assets/pokeball.svg" alt="Pokeball" class="w-5 h-5">
+        <span class="font-black text-sm tracking-wider bg-gradient-to-r from-red-500 via-rose-400 to-amber-300 bg-clip-text text-transparent">
+          PkIdleGrid
+        </span>
+      </div>
+
+      <div class="h-4 w-px bg-slate-800"></div>
+
+      <!-- Seletor de Modo de Grade -->
+      <div class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 gap-1 text-xs font-semibold">
+        <button id="mode-btn-grid4" class="px-2.5 py-0.5 rounded bg-blue-600 text-white transition" title="Grade com 4 Contas">
+          ⊞ Grade 4
+        </button>
+        <button id="mode-btn-focus" class="px-2.5 py-0.5 rounded text-slate-400 hover:text-white transition" title="Foco em 1 Conta (Tela Cheia)">
+          ⛶ 1 Conta
+        </button>
+        <button id="mode-btn-split2" class="px-2.5 py-0.5 rounded text-slate-400 hover:text-white transition" title="2 Contas Lado a Lado">
+          ◫ Lado a Lado
+        </button>
+      </div>
+
+      <!-- Abas de Alternância Rápida no Modo Foco -->
+      <div id="focus-tabs-bar" class="hidden items-center gap-1">
+        <button id="focus-tab-0" class="px-2 py-0.5 rounded text-xs font-bold border border-slate-700 bg-slate-800 text-slate-300 transition">C1: Conta 1</button>
+        <button id="focus-tab-1" class="px-2 py-0.5 rounded text-xs font-bold border border-slate-700 bg-slate-800 text-slate-300 transition">C2: Conta 2</button>
+        <button id="focus-tab-2" class="px-2 py-0.5 rounded text-xs font-bold border border-slate-700 bg-slate-800 text-slate-300 transition">C3: Conta 3</button>
+        <button id="focus-tab-3" class="px-2 py-0.5 rounded text-xs font-bold border border-slate-700 bg-slate-800 text-slate-300 transition">C4: Conta 4</button>
+      </div>
+    </div>
+
+    <!-- Ferramentas Principais -->
+    <div class="flex items-center gap-2 text-xs font-semibold">
+      <button id="btn-top-login-all" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-lg flex items-center gap-1.5 transition shadow-sm font-bold">
+        <span>▶</span> Logar Equipe
+      </button>
+
+      <!-- Botão Farm (Painel Lateral) -->
+      <button id="btn-top-sidebar" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1 rounded-lg flex items-center gap-1.5 transition" title="Abre o painel lateral com números da hunt ao mesmo tempo que o jogo">
+        <span>📊</span> Farm
+      </button>
+
+      <!-- Botão Capturas (Abre na lateral, sem cobrir os jogos) -->
+      <button id="btn-top-captures" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1 rounded-lg flex items-center gap-1.5 transition" title="Filtrar capturas na barra lateral ao lado dos jogos">
+        <span>🎯</span> Capturas
+      </button>
+
+      <div class="h-4 w-px bg-slate-800"></div>
+
+      <!-- Alternador Rápido de Interface Limpa (Clean HUD) -->
+      <button id="btn-top-clean-hud" class="bg-slate-800 text-slate-400 border border-slate-700 px-2.5 py-1 rounded-lg flex items-center gap-1 transition" title="Oculta avisos do jogo até você passar o mouse por cima (F2)">
+        <span>✨</span> Limpar Jogo <span class="text-[10px] text-slate-500 font-mono">F2</span>
+      </button>
+
+      <!-- Botão Ocultar Chat -->
+      <button id="btn-top-hide-chat" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition" title="Oculta ou exibe o chat do jogo em todas as contas">
+        <span>💬</span> Ocultar Chat
+      </button>
+
+      <!-- Botão IVs -->
+      <button id="btn-top-ivs" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition" title="Abrir janela de IVs e Status (passe o mouse no Pokémon)">
+        <span>📊</span> IVs
+      </button>
+
+      <button id="btn-top-accounts" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1 rounded-lg flex items-center gap-1.5 transition">
+        <span>👤</span> Treinadores
+      </button>
+
+      <button id="btn-top-reload-all" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-2 py-1 rounded-lg transition" title="Recarregar todos os painéis">
+        ⟳
+      </button>
+    </div>
+  </header>
+
+  <!-- ÁREA PRINCIPAL: PAINEL LATERAL + JOGOS LADO A LADO -->
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- SIDEBAR LATERAL (EMPURRA OS JOGOS, NÃO FICA POR CIMA) -->
+    <aside id="sidebar-stats" class="shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col relative z-20" style="display: none; width: 360px;">
+      <!-- Cabeçalho da Sidebar com seletor de visualização Farm / Capturas -->
+      <div class="h-10 px-3 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between shrink-0 gap-2">
+        <div class="flex-1 flex items-center bg-slate-900 p-0.5 rounded-lg border border-slate-800">
+          <button id="side-view-farm" class="flex-1 py-1 text-center text-xs font-bold rounded-lg bg-blue-600 text-white transition">📊 Farm</button>
+          <button id="side-view-caps" class="flex-1 py-1 text-center text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">🎯 Capturas</button>
+        </div>
+        <button id="btn-close-sidebar" class="text-slate-400 hover:text-white text-xs px-2 py-1 rounded hover:bg-slate-800 transition">✕</button>
+      </div>
+
+      <!-- Abas de seleção de conta do Farm [ C1 ] [ C2 ] [ C3 ] [ C4 ] [ Total Σ ] -->
+      <div id="side-tabs-row" class="p-2 border-b border-slate-800 bg-slate-950/40 flex items-center gap-1 shrink-0">
+        <button id="side-tab-0" class="flex-1 py-1 text-center text-xs font-bold rounded-lg bg-blue-600 text-white">C1</button>
+        <button id="side-tab-1" class="flex-1 py-1 text-center text-xs font-medium rounded-lg bg-slate-800 text-slate-400">C2</button>
+        <button id="side-tab-2" class="flex-1 py-1 text-center text-xs font-medium rounded-lg bg-slate-800 text-slate-400">C3</button>
+        <button id="side-tab-3" class="flex-1 py-1 text-center text-xs font-medium rounded-lg bg-slate-800 text-slate-400">C4</button>
+        <button id="side-tab-4" class="flex-1 py-1 text-center text-xs font-medium rounded-lg bg-slate-800 text-slate-400" title="Soma de todas as contas">Σ</button>
+      </div>
+
+      <!-- Conteúdo Dinâmico da Sidebar (Farm ou Capturas) -->
+      <div id="sidebar-body" class="flex-1 overflow-y-auto p-3">
+        <!-- Inserido dinamicamente -->
+      </div>
+
+      <!-- Borda para Redimensionamento Manual da Sidebar -->
+      <div id="sidebar-resize-handle" class="absolute top-0 right-0 bottom-0 w-1.5 hover:w-2 bg-transparent hover:bg-blue-600/50 cursor-ew-resize transition-all"></div>
+    </aside>
+
+    <!-- CONTAINER DOS PAINÉIS DO JOGO (FLEX-1 SE ADAPTA À LARGURA RESTANTE) -->
+    <main id="main-game-area" class="flex-1 relative overflow-hidden bg-black">
+      <div id="panels-container" class="w-full h-full relative" style="display: grid; grid-template-columns: 50% 4px calc(50% - 4px); grid-template-rows: 50% 4px calc(50% - 4px);">
+        
+        <!-- PAINEL CONTA 1 -->
+        <div id="panel-0" class="flex flex-col bg-slate-900 border border-slate-800 overflow-hidden relative" style="grid-column: 1; grid-row: 1;">
+          <div class="h-8 bg-slate-900/95 border-b border-slate-800/80 px-2.5 flex items-center justify-between shrink-0 select-none">
+            <div class="flex items-center gap-2 overflow-hidden">
+              <span class="w-5 h-5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/40 text-[10px] font-bold flex items-center justify-center shrink-0">C1</span>
+              <span id="panel-title-0" class="font-bold text-xs text-slate-200 truncate">Conta 1</span>
+              <span id="panel-status-0" class="px-2 py-0.5 rounded-full text-[10px] font-medium border bg-slate-800 text-slate-400 border-slate-700">Aguardando...</span>
+            </div>
+            <div class="flex items-center gap-1 text-slate-400 text-xs">
+              <button class="btn-zoom-out hover:text-white px-1 font-mono">−</button>
+              <span class="zoom-display text-[10px] text-slate-500 w-7 text-center">100%</span>
+              <button class="btn-zoom-in hover:text-white px-1 font-mono">+</button>
+              <button class="btn-mute hover:text-white px-1.5 text-xs">🔊</button>
+              <button class="btn-reload hover:text-white px-1.5 text-xs" title="Recarregar">⟳</button>
+              <button class="btn-maximize hover:text-white px-1.5 text-xs font-bold" title="Tela Cheia / Foco">⛶</button>
+            </div>
+          </div>
+          <div class="flex-1 relative w-full h-full bg-black">
+            <webview id="webview-0" src="https://poke.idleworld.online/login" partition="persist:conta1" webpreferences="backgroundThrottling=no" allowpopups></webview>
+          </div>
+        </div>
+
+        <!-- SPLITTER VERTICAL -->
+        <div id="splitter-v" class="bg-slate-800/80 hover:bg-blue-600 transition cursor-col-resize z-10" style="grid-column: 2; grid-row: 1 / 4;"></div>
+
+        <!-- PAINEL CONTA 2 -->
+        <div id="panel-1" class="flex flex-col bg-slate-900 border border-slate-800 overflow-hidden relative" style="grid-column: 3; grid-row: 1;">
+          <div class="h-8 bg-slate-900/95 border-b border-slate-800/80 px-2.5 flex items-center justify-between shrink-0 select-none">
+            <div class="flex items-center gap-2 overflow-hidden">
+              <span class="w-5 h-5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/40 text-[10px] font-bold flex items-center justify-center shrink-0">C2</span>
+              <span id="panel-title-1" class="font-bold text-xs text-slate-200 truncate">Conta 2</span>
+              <span id="panel-status-1" class="px-2 py-0.5 rounded-full text-[10px] font-medium border bg-slate-800 text-slate-400 border-slate-700">Aguardando...</span>
+            </div>
+            <div class="flex items-center gap-1 text-slate-400 text-xs">
+              <button class="btn-zoom-out hover:text-white px-1 font-mono">−</button>
+              <span class="zoom-display text-[10px] text-slate-500 w-7 text-center">100%</span>
+              <button class="btn-zoom-in hover:text-white px-1 font-mono">+</button>
+              <button class="btn-mute hover:text-white px-1.5 text-xs">🔊</button>
+              <button class="btn-reload hover:text-white px-1.5 text-xs" title="Recarregar">⟳</button>
+              <button class="btn-maximize hover:text-white px-1.5 text-xs font-bold" title="Tela Cheia / Foco">⛶</button>
+            </div>
+          </div>
+          <div class="flex-1 relative w-full h-full bg-black">
+            <webview id="webview-1" src="https://poke.idleworld.online/login" partition="persist:conta2" webpreferences="backgroundThrottling=no" allowpopups></webview>
+          </div>
+        </div>
+
+        <!-- SPLITTER HORIZONTAL -->
+        <div id="splitter-h" class="bg-slate-800/80 hover:bg-blue-600 transition cursor-row-resize z-10" style="grid-column: 1 / 4; grid-row: 2;"></div>
+
+        <!-- PAINEL CONTA 3 -->
+        <div id="panel-2" class="flex flex-col bg-slate-900 border border-slate-800 overflow-hidden relative" style="grid-column: 1; grid-row: 3;">
+          <div class="h-8 bg-slate-900/95 border-b border-slate-800/80 px-2.5 flex items-center justify-between shrink-0 select-none">
+            <div class="flex items-center gap-2 overflow-hidden">
+              <span class="w-5 h-5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold flex items-center justify-center shrink-0">C3</span>
+              <span id="panel-title-2" class="font-bold text-xs text-slate-200 truncate">Conta 3</span>
+              <span id="panel-status-2" class="px-2 py-0.5 rounded-full text-[10px] font-medium border bg-slate-800 text-slate-400 border-slate-700">Aguardando...</span>
+            </div>
+            <div class="flex items-center gap-1 text-slate-400 text-xs">
+              <button class="btn-zoom-out hover:text-white px-1 font-mono">−</button>
+              <span class="zoom-display text-[10px] text-slate-500 w-7 text-center">100%</span>
+              <button class="btn-zoom-in hover:text-white px-1 font-mono">+</button>
+              <button class="btn-mute hover:text-white px-1.5 text-xs">🔊</button>
+              <button class="btn-reload hover:text-white px-1.5 text-xs" title="Recarregar">⟳</button>
+              <button class="btn-maximize hover:text-white px-1.5 text-xs font-bold" title="Tela Cheia / Foco">⛶</button>
+            </div>
+          </div>
+          <div class="flex-1 relative w-full h-full bg-black">
+            <webview id="webview-2" src="https://poke.idleworld.online/login" partition="persist:conta3" webpreferences="backgroundThrottling=no" allowpopups></webview>
+          </div>
+        </div>
+
+        <!-- PAINEL CONTA 4 -->
+        <div id="panel-3" class="flex flex-col bg-slate-900 border border-slate-800 overflow-hidden relative" style="grid-column: 3; grid-row: 3;">
+          <div class="h-8 bg-slate-900/95 border-b border-slate-800/80 px-2.5 flex items-center justify-between shrink-0 select-none">
+            <div class="flex items-center gap-2 overflow-hidden">
+              <span class="w-5 h-5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[10px] font-bold flex items-center justify-center shrink-0">C4</span>
+              <span id="panel-title-3" class="font-bold text-xs text-slate-200 truncate">Conta 4</span>
+              <span id="panel-status-3" class="px-2 py-0.5 rounded-full text-[10px] font-medium border bg-slate-800 text-slate-400 border-slate-700">Aguardando...</span>
+            </div>
+            <div class="flex items-center gap-1 text-slate-400 text-xs">
+              <button class="btn-zoom-out hover:text-white px-1 font-mono">−</button>
+              <span class="zoom-display text-[10px] text-slate-500 w-7 text-center">100%</span>
+              <button class="btn-zoom-in hover:text-white px-1 font-mono">+</button>
+              <button class="btn-mute hover:text-white px-1.5 text-xs">🔊</button>
+              <button class="btn-reload hover:text-white px-1.5 text-xs" title="Recarregar">⟳</button>
+              <button class="btn-maximize hover:text-white px-1.5 text-xs font-bold" title="Tela Cheia / Foco">⛶</button>
+            </div>
+          </div>
+          <div class="flex-1 relative w-full h-full bg-black">
+            <webview id="webview-3" src="https://poke.idleworld.online/login" partition="persist:conta4" webpreferences="backgroundThrottling=no" allowpopups></webview>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL: TREINADORES (CREDENCIAIS SEGURAS) -->
+  <div id="accounts-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-modal w-full max-w-2xl rounded-2xl flex flex-col overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">👤</span>
+          <div>
+            <h3 class="text-base font-bold text-white">Contas dos Treinadores</h3>
+            <p class="text-xs text-slate-400">Login e senha são criptografados no seu PC (safeStorage)</p>
+          </div>
+        </div>
+        <button id="btn-close-accounts" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-sm font-bold transition">✕</button>
+      </div>
+
+      <div class="p-4 space-y-3">
+        <div class="grid grid-cols-1 gap-3">
+          <!-- Conta 1 -->
+          <div class="p-3 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center gap-3">
+            <span class="w-6 h-6 rounded bg-blue-500/20 text-blue-400 border border-blue-500/40 text-xs font-bold flex items-center justify-center shrink-0">1</span>
+            <input id="acc-name-0" type="text" placeholder="Nome da Conta" class="w-32 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+            <input id="acc-email-0" type="email" placeholder="E-mail de Login" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+            <input id="acc-pass-0" type="password" placeholder="Senha" class="w-36 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+            <button id="btn-clear-cache-0" class="text-[11px] text-slate-400 hover:text-red-400 border border-slate-700 rounded px-2 py-1 transition" title="Limpar cookies/cache se a conta estiver bugada">Limpar</button>
+          </div>
+          <!-- Conta 2 -->
+          <div class="p-3 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center gap-3">
+            <span class="w-6 h-6 rounded bg-purple-500/20 text-purple-400 border border-purple-500/40 text-xs font-bold flex items-center justify-center shrink-0">2</span>
+            <input id="acc-name-1" type="text" placeholder="Nome da Conta" class="w-32 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+            <input id="acc-email-1" type="email" placeholder="E-mail de Login" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+            <input id="acc-pass-1" type="password" placeholder="Senha" class="w-36 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+            <button id="btn-clear-cache-1" class="text-[11px] text-slate-400 hover:text-red-400 border border-slate-700 rounded px-2 py-1 transition" title="Limpar cookies/cache">Limpar</button>
+          </div>
+          <!-- Conta 3 -->
+          <div class="p-3 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center gap-3">
+            <span class="w-6 h-6 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold flex items-center justify-center shrink-0">3</span>
+            <input id="acc-name-2" type="text" placeholder="Nome da Conta" class="w-32 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+            <input id="acc-email-2" type="email" placeholder="E-mail de Login" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+            <input id="acc-pass-2" type="password" placeholder="Senha" class="w-36 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+            <button id="btn-clear-cache-2" class="text-[11px] text-slate-400 hover:text-red-400 border border-slate-700 rounded px-2 py-1 transition" title="Limpar cookies/cache">Limpar</button>
+          </div>
+          <!-- Conta 4 -->
+          <div class="p-3 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center gap-3">
+            <span class="w-6 h-6 rounded bg-amber-500/20 text-amber-400 border border-amber-500/40 text-xs font-bold flex items-center justify-center shrink-0">4</span>
+            <input id="acc-name-3" type="text" placeholder="Nome da Conta" class="w-32 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+            <input id="acc-email-3" type="email" placeholder="E-mail de Login" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+            <input id="acc-pass-3" type="password" placeholder="Senha" class="w-36 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+            <button id="btn-clear-cache-3" class="text-[11px] text-slate-400 hover:text-red-400 border border-slate-700 rounded px-2 py-1 transition" title="Limpar cookies/cache">Limpar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-slate-800 flex items-center justify-end gap-2">
+        <button id="btn-save-accounts" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-2 rounded-xl transition">
+          Salvar Credenciais
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARD FLUTUANTE DE IVs (MOUSE HOVER & DRAGGABLE) -->
+  <div id="iv-hover-card" class="hidden fixed z-40 w-80 glass-modal rounded-2xl p-4 shadow-2xl border border-slate-700/80 select-none">
+    <div id="iv-card-header" class="flex items-center justify-between border-b border-slate-800/80 pb-2.5 cursor-grab active:cursor-grabbing select-none" title="Arraste para reposicionar a janela">
+      <div class="flex items-center gap-2 pointer-events-none">
+        <div class="w-10 h-10 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center p-1">
+          <img id="iv-card-sprite" src="assets/pokeball.svg" alt="Pokemon" class="w-full h-full object-contain">
+        </div>
+        <div>
+          <h4 id="iv-card-name" class="font-bold text-white text-sm leading-tight flex items-center gap-1.5">
+            Pokémon
+            <span class="text-[10px] text-slate-500 font-normal">⋮⋮</span>
+          </h4>
+          <span id="iv-card-level" class="text-[11px] text-slate-400">Nv. 100</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 pointer-events-auto">
+        <button id="btn-pin-iv-card" class="text-slate-400 hover:text-white text-xs px-1.5 py-0.5 rounded cursor-pointer" title="Fixar este card na tela">📌</button>
+        <button id="btn-close-iv-card" class="text-slate-400 hover:text-white text-xs px-1.5 py-0.5 rounded cursor-pointer" title="Fechar">✕</button>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between mt-3 bg-slate-900/80 border border-slate-800 rounded-xl p-2.5">
+      <div>
+        <span class="text-[10px] text-slate-500 uppercase font-semibold">Potencial</span>
+        <p id="iv-card-potential" class="text-xs font-bold text-blue-400">Excelente</p>
+      </div>
+      <div class="text-right">
+        <span class="text-[10px] text-slate-500 uppercase font-semibold">IV Total</span>
+        <p id="iv-card-total" class="text-xs font-bold font-mono text-white">--/192 (--%)</p>
+      </div>
+    </div>
+
+    <div id="iv-stats-bars" class="mt-3 space-y-1">
+      <!-- Inserido dinamicamente -->
+    </div>
+  </div>
+
+  <!-- MODAL DA POKÉDEX & VIAGEM RÁPIDA -->
+  <div id="pokedex-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div class="glass-modal w-full max-w-4xl rounded-2xl flex flex-col max-h-[85vh] shadow-2xl overflow-hidden border border-slate-700">
+      
+      <!-- Cabeçalho -->
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-xl">
+            ⚡
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white leading-tight">Pokédex & Viagem Rápida</h3>
+            <p class="text-xs text-slate-400">Busque qualquer Pokémon e teleporte suas contas diretamente para a hunt</p>
+          </div>
+        </div>
+
+        <button id="btn-close-pokedex" class="text-slate-400 hover:text-white text-xl p-1 rounded-lg hover:bg-slate-800 transition">
+          ✕
+        </button>
+      </div>
+
+      <!-- Barra de Busca e Filtros -->
+      <div class="p-4 border-b border-slate-800 bg-slate-900/40 flex items-center gap-3">
+        <div class="relative flex-1">
+          <input id="pokedex-search-input" type="text" placeholder="Digite o nome do Pokémon (ex: Pikachu, Charmander, Gengar)..." 
+                 class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition">
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-slate-400 font-medium">Enviar:</span>
+          <select id="pokedex-target-account" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+            <option value="0">Conta 1 (C1)</option>
+            <option value="1">Conta 2 (C2)</option>
+            <option value="2">Conta 3 (C3)</option>
+            <option value="3">Conta 4 (C4)</option>
+            <option value="-1">🔥 Todas as 4 Contas</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Grade de Resultados -->
+      <div id="pokedex-results" class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto max-h-[55vh]">
+        <!-- Inserido dinamicamente -->
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTAINER DE NOTIFICAÇÕES (TOAST) -->
+  <div id="toast-container" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-2 items-center pointer-events-none">
+  </div>
+
+</body>
+</html>
